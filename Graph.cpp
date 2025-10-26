@@ -24,14 +24,14 @@ private:
 	void readGraph();
 	void insertEdge(int x, int y, int w);
 
-	void DFSHelper(int v, std::vector<bool> &discovered, std::vector<int> &parent);
+	void DFSRecursiveHelper(int start, std::vector<bool> &discovered, std::vector<bool> &processed, std::vector<int> &parent);
 
 public:
-	Graph(int v, int n, bool d);		/* init graph */
-	void printGraph();					/* print edges and edge weights */
-	std::vector<int> BFS(int start);	/* returns parent vector for nodes after BFS */
-	std::vector<int> DFS(int start);	/* returns parent vector for nodes after DFS */
-	
+	Graph(int v, int n, bool d);				/* init graph */
+	void printGraph();							/* print edges and edge weights */
+	std::vector<int> BFS(int start);			/* returns parent vector for nodes after BFS */
+	std::vector<int> DFSIterative(int start);	/* returns parent vector for nodes after DFS */
+	std::vector<int> DFSRecursive(int start);
 };
 
 Graph::Graph(int v, int n, bool d) {
@@ -113,7 +113,7 @@ std::vector<int> Graph::BFS(int start) {
 	return parent;
 }
 
-std::vector<int> Graph::DFS(int start) {
+std::vector<int> Graph::DFSIterative(int start) {
 	std::stack<int> s;
 	std::vector<bool> discovered(nvertices, false);
 	std::vector<bool> processed(nvertices, false);
@@ -125,7 +125,7 @@ std::vector<int> Graph::DFS(int start) {
 
 	s.push(start);
 	discovered[start] = true;
-	
+
 	while (!s.empty()) {
 		x = s.top();
 		skip = false;
@@ -140,6 +140,8 @@ std::vector<int> Graph::DFS(int start) {
 				discovered[e.y] = true;
 				skip = true;
 				break;
+			} else if ((!processed[e.y] && parent[x] == e.y) || directed) {
+				/* perform edge processing here */
 			}
 		}
 
@@ -151,3 +153,30 @@ std::vector<int> Graph::DFS(int start) {
 	return parent;
 }
 
+std::vector<int> Graph::DFSRecursive(int start) {
+	std::vector<bool> discovered(nvertices, false);
+    std::vector<bool> processed(nvertices, false);
+    std::vector<int> parent(nvertices, -1);
+
+    discovered[start] = true;
+    DFSRecursiveHelper(start, discovered, processed, parent);
+    return parent;
+}
+
+void Graph::DFSRecursiveHelper(int start, std::vector<bool> &discovered, std::vector<bool> &processed, std::vector<int> &parent) {
+	discovered[start] = true;
+	/* perform early vertex processing here */
+	Edge e;
+	for (int i = 0; i < edges[start].size(); i++) {
+		e = edges[start][i];
+		if (!discovered[e.y]) {
+			parent[e.y] = start;
+			/* perform edge processing here */
+			DFSRecursiveHelper(e.y, discovered, processed, parent);
+		} else if ((!processed[e.y] && parent[start] != e.y) || directed) {
+			/* perform edge processing here */
+		}
+	}
+	/* perform late processing here */
+	processed[start] = true;
+}
