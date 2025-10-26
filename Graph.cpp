@@ -1,5 +1,7 @@
 #include <iostream>
 #include <vector>
+#include <queue>
+#include <stack>
 #include <stdexcept>
 
 struct Edge {
@@ -22,9 +24,14 @@ private:
 	void readGraph();
 	void insertEdge(int x, int y, int w);
 
+	void DFSHelper(int v, std::vector<bool> &discovered, std::vector<int> &parent);
+
 public:
-	Graph(int v, int n, bool d);
-	void printGraph();
+	Graph(int v, int n, bool d);		/* init graph */
+	void printGraph();					/* print edges and edge weights */
+	std::vector<int> BFS(int start);	/* returns parent vector for nodes after BFS */
+	std::vector<int> DFS(int start);	/* returns parent vector for nodes after DFS */
+	
 };
 
 Graph::Graph(int v, int n, bool d) {
@@ -32,8 +39,8 @@ Graph::Graph(int v, int n, bool d) {
 	nvertices = v;
 	directed = d;
 
-	edges = std::vector<std::vector<Edge>>(n);
-	outDegree = std::vector<int>(n, 0);
+	edges = std::vector<std::vector<Edge>>(v);
+	outDegree = std::vector<int>(v, 0);
 
 	readGraph();
 }
@@ -53,7 +60,7 @@ void Graph::insertEdge(int x, int y, int w) {
 
 	edges[x].push_back(Edge(y, w));
 	outDegree[x]++;
-	if (directed) {
+	if (!directed) {
 		edges[y].push_back(Edge(x, w));
 		outDegree[y]++;
 	}
@@ -71,3 +78,76 @@ void Graph::printGraph() {
 		}
 	}
 }
+
+std::vector<int> Graph::BFS(int start) {
+	std::queue<int> q;
+	std::vector<bool> discovered(nvertices, false);
+	std::vector<bool> processed(nvertices, false);
+	std::vector<int> parent(nvertices, -1);
+
+	int x;
+	Edge e;
+
+	q.push(start);
+	discovered[start] = true;
+
+	while (!q.empty()) {
+		x = q.front();
+		q.pop();
+		/* perform early vertex processing here */
+		processed[x] = true;
+		for (int i = 0; i < edges[x].size(); i++) {
+			e = edges[x][i];
+			if (!processed[e.y] || directed) {
+				/* perform edge processing here */
+			}
+			if (!discovered[e.y]) {
+				q.push(e.y);
+				discovered[e.y] = true;
+				parent[e.y] = x;
+			}
+		}
+		/* perform late vertex processing here */
+	}
+
+	return parent;
+}
+
+std::vector<int> Graph::DFS(int start) {
+	std::stack<int> s;
+	std::vector<bool> discovered(nvertices, false);
+	std::vector<bool> processed(nvertices, false);
+	std::vector<int> parent(nvertices, -1);
+
+	int x;
+	Edge e;
+	bool skip;
+
+	s.push(start);
+	discovered[start] = true;
+	
+	while (!s.empty()) {
+		x = s.top();
+		skip = false;
+
+		/* perform early vertex processing here */
+		for (int i = 0; i < edges[x].size(); i++) {
+			e = edges[x][i];
+			if (!discovered[e.y]) {
+				parent[e.y] = x;
+				/* perform edge processing here */
+				s.push(e.y);
+				discovered[e.y] = true;
+				skip = true;
+				break;
+			}
+		}
+
+		if (skip) continue;
+		/* perform late vertex processing here */
+		processed[x] = true;
+		s.pop();
+	}
+	return parent;
+}
+
